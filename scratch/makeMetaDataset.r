@@ -52,3 +52,17 @@ x$pubTypeSet <- toupper(x$pubTypeSet)
 x$journal <- toupper(x$journal)
 x$keywordSet <- toupper(as.character(x$keywordSet))
 write.csv(x, "pubmed_rvf.csv", row.names=FALSE)
+
+x <- foreach(n=getNodeSet(doc, "//PubmedArticle")) %do% {
+  title <- xmlSApply(getNodeSet(n, ".//Title"), xmlValue)
+  abstract <- xmlSApply(getNodeSet(n, ".//Abstract"), xmlValue)
+  if (length(abstract) == 0)
+    abstract <- as.character(NA)
+  list(title=title, abstract=abstract)
+}
+
+title <- Reduce(c, Map(function(x) x$title, x))
+abstract <- Reduce(c, Map(function(x) x$abstract, x))
+write.csv(data.frame(list(title=title, abstract=abstract)), 
+  "title_abstract.csv", row.names=FALSE)
+
