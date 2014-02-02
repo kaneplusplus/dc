@@ -54,7 +54,7 @@ x$keywordSet <- toupper(as.character(x$keywordSet))
 write.csv(x, "pubmed_rvf.csv", row.names=FALSE)
 
 x <- foreach(n=getNodeSet(doc, "//PubmedArticle")) %do% {
-  title <- xmlSApply(getNodeSet(n, ".//Title"), xmlValue)
+  title <- xmlSApply(getNodeSet(n, ".//ArticleTitle"), xmlValue)
   abstract <- xmlSApply(getNodeSet(n, ".//Abstract"), xmlValue)
   if (length(abstract) == 0)
     abstract <- as.character(NA)

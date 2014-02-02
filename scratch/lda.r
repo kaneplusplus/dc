@@ -20,24 +20,23 @@ ta <- paste(x$title, x$abstract)
 ta <- tolower(ta)
 
 excludes <- c("virus", "fever", "rift", "valley", "rvfv", "rvf", "viral", ",",
-  ")", "\\(", "\\.", as.character(0:9))
+  ")", "\\(", "\\.", as.character(0:9), "es")
 for (e in excludes) 
   ta <- gsub(e, " ", ta)
 
 ta <- gsub("[ ]+", " ", ta)
 
-cutoff <- 2
+cutoff <- 10 
 
 input <- preprocess(data=ta, exact=NULL, partial=NULL, subs=NULL,
   stopwords=stopwords(), cutoff=cutoff, verbose=TRUE, quiet=FALSE, stem=TRUE)
 
 if (any(input$category < 0)) {
   ta <- ta[input$category >= 0]
+
   input <- preprocess(data=ta, exact=NULL, partial=NULL, subs=NULL,
     stopwords=stopwords(), cutoff=cutoff, verbose=TRUE, quiet=FALSE, stem=TRUE)
 }
-
-tt()[1:40, ]
 
 N <- length(input$token.id)  # total number of tokens in the data
 D <- max(input$doc.id)  # total number of documents that will go 
@@ -45,7 +44,7 @@ D <- max(input$doc.id)  # total number of documents that will go
 W <- length(input$vocab)  # number of tokens in the 
   # vocabulary (i.e. number of unique tokens)
 
-K <- 5 # number of topics
+K <- 6 # number of topics
 G <- 1000 # number of iterations
 
 alpha <- 1/K # add one pseudo-observation to each document-topic distribution
@@ -61,12 +60,15 @@ docProb <- getProbs(token.id=input$token.id, doc.id=input$doc.id,
   topic.id=fit$topics, vocab=input$vocab,
   alpha=alpha, beta=beta, sort.topics="byDocs", K=K)
 
+doc_clusters = data.frame(list(doc_id=unique(input$doc.id), 
+  cluster=docProb$main.topic, title_abstract=ta))
+
 z <- jsviz(text=ta, doc.id=input$doc.id, token.id=input$token.id, 
   topic.id=docProb$topic.id, vocab=input$vocab, K=K, k.clusters=1, lambda=0.5, 
   n.tokens=30, n.docs=10, alpha=alpha, beta=beta, sort.topics="None")
 
 z.out <- toJSON(z)
-cat(z.out, file="out.json")
+cat(z.out, file="web_app/lda.json")
 
 # See terms in topic 1.
 head(tt(ta[docProb$main.topic == 1]), 20)
