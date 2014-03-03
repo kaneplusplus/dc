@@ -11,7 +11,9 @@ import string
 import nltk
 
 def wait(wait_time=1.5):
-  sleep(min([exponential(wait_time,1)[0], 12.756]))
+  wt = min([exponential(wait_time,1)[0], 12.756])
+  wt += 1 if wt < 1.0 else 0
+  sleep(wt)
 
 def string_similarity(s1, s2):
   remove_punctuation_map=dict((ord(char), None) for char in string.punctuation)
@@ -60,7 +62,9 @@ def article_links_and_abstract_fragment(elements, bibtex_entries):
     abs_word_string = ""
     if (len(abs_frag) > 4 and abs_row_index > 0):
       abs_word_string = " ".join(abs_frag[(abs_row_index+1):(len(abs_frag)-1)])
-    ret.append([article_link, abs_word_string])
+    aws_temp = abs_word_string.splitlines()
+    aws = " ".join(aws_temp)
+    ret.append([article_link, aws])
   return(ret)
 
 def abstract_from_alaf(alaf):
@@ -68,6 +72,7 @@ def abstract_from_alaf(alaf):
     return(alaf[1])
   wait()
   browser.get(alaf[0])
+  # Need to check for modal dialogue
   check_bot_detected(browser)
   content=browser.page_source
   cleaner=clean.Cleaner()
@@ -124,18 +129,7 @@ browser = webdriver.Firefox()
 wait()
 #browser.delete_all_cookies()
 
-start_page=None
-
-def check_bot_detected(browser):
-  detected_string = u"Our systems have detected unusual traffic from you"
-  while detected_string in browser.page_source:
-    sleep(5)
-
-if start_page is not None:
-  browser.get(start_page)
-  check_bot_detected(browser)
-else:
-  # Go to google scholar
+def set_browser_defaults(browser):
   browser.get("http://scholar.google.com")
   check_bot_detected(browser) and wait()
 
@@ -154,16 +148,6 @@ else:
       element.click()
       check_bot_detected(browser)
 
-  # 10 results per page. This will make it easier to restart when we get 
-  # blocked.
-  #element = browser.find_elements_by_xpath('//button[@id="gs_num-bd"]')[0]
-  #check_bot_detected(browser) and wait()
-  #element = browser.find_elements_by_xpath('//li[@data-v="10"]')[0]
-  #if check_bot_detected(browser): 
-  #  element = browser.find_elements_by_xpath('//li[@data-v="10"]')[0]
-  #wait()
-  #element.click()
-
   # Return BibTex citations.
   element = browser.find_elements_by_xpath('//input[@id="scis1"]')[0]
   element.click()
@@ -176,6 +160,27 @@ else:
   wait()
   element.click()
 
+start_page=None
+#"http://scholar.google.com/scholar?start=110&q=Rift+Valley+Fever&hl=en&as_sdt=0,31"
+
+of = open("google_scholar_query.csv", "wa")
+
+def check_bot_detected(browser):
+  detected_string = u"Our systems have detected unusual traffic from you"
+  while detected_string in browser.page_source:
+    sleep(5)
+
+set_browser_defaults(browser)
+
+if start_page is not None:
+  browser.get(start_page)
+  check_bot_detected(browser)
+else:
+  of.write(u"type,publisher,year,title,firsts,middles,lasts,abstract\n")
+  
+  # Go to google scholar
+  browser.get("http://scholar.google.com")
+  check_bot_detected(browser) and wait()
   query_string = "Rift Valley Fever"
 
   # Fill in the query string.
@@ -188,10 +193,10 @@ else:
   element.click()
 
 done = False
-print("type,publisher,year,title,firsts,middles,lasts,abstract")
 while (not done):
 
   current_url = browser.current_url
+  print(current_url)
 
   # Grab the individual results.
   elements = browser.find_elements_by_xpath( '//div[@class="gs_r"]')
@@ -208,22 +213,23 @@ while (not done):
     check_bot_detected(browser)
     entry_text = browser.find_elements_by_xpath("//pre")[0].text
     bibtex_entries.append(bibtex_fields(entry_text))
-
   # Go back 
   wait()
   browser.get(current_url)
   check_bot_detected(browser)
+
   elements = browser.find_elements_by_xpath( '//div[@class="gs_r"]')
   alafs = article_links_and_abstract_fragment(elements, bibtex_entries)
 
   abstracts = [abstract_from_alaf(alaf) for alaf in alafs]
-  doc_data = [ bibtex_entries[i] + [abstracts[i]] for i in range(10) ]
+  abstracts_one_line = [u'"'+u" ".join(a.splitlines())+u'"' for a in abstracts]
+  doc_data = [ bibtex_entries[i] + [abstracts_one_line[i]] + ['"'+ alafs[i][0]+'"'] for i in range(10) ]
 
   # Get rid of all commas and print
   doc_data_no_comma = []
   for s in doc_data:
     doc_data_no_comma.append([x.replace(u',', u'') for x in s])
-  [print(u",".join(d)) for d in doc_data_no_comma]
+  [of.write(u",".join(d).encode('utf-8').strip()+"\n") for d in doc_data_no_comma]
 
   wait()
   browser.get(current_url)
