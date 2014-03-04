@@ -1,4 +1,4 @@
-import logging, gensim, pandas, nltk
+import gensim, nltk
 
 def token_gen(lines):
   for line in lines:
