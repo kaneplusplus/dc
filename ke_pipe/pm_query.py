@@ -2,9 +2,9 @@ import requests
 import sys
 import optparse
 import xml.etree.ElementTree as ET
-import logging
+#import logging
 import string
-logging.basicConfig(format='%(asctime)s %(levelname)-7s %(message)s [%(pathname)s]', level=logging.INFO)
+#logging.basicConfig(format='%(asctime)s %(levelname)-7s %(message)s [%(pathname)s]', level=logging.INFO)
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -26,10 +26,9 @@ def pm_query_gen(query):
   response = requests.get(esearch)
   root = ET.fromstring(response.text)
   ids = [x.text for x in root.findall("IdList/Id")]
-  logging.info('Got {} articles'.format(len(ids)))
-  count = 0
+  #logging.info('Got {} articles'.format(len(ids)))
 
-  for group in chunker(ids, 300):
+  for group in chunker(ids, 500):
     efetch = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?&db=pubmed&retmode=xml&id={}".format((','.join(group)))
     response = requests.get(efetch)
     root = ET.fromstring(response.text)
@@ -49,10 +48,10 @@ def pm_query_gen(query):
         abstract_text = abstract_text.encode('ascii', 'replace')
       else:
         yield None
-      title.replace(',', " ")
-      title.replace('"', "")
-      abstract_text.replace(',', " ")
-      abstract_text.replace('"', "")
+      title = title.replace(',', " ")
+      title = title.replace('"', "")
+      abstract_text = abstract_text.replace(',', " ")
+      abstract_text = abstract_text.replace('"', "")
       title = '"' + title + '"'
       abstract_text = '"' + abstract_text + '"'
       lasts = [x.text for x in 

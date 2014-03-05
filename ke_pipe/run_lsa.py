@@ -8,7 +8,7 @@ if __name__ == '__main__':
   # load id->word mapping (the dictionary), one of the results of step 2 above
   id2word = gensim.corpora.Dictionary.load('d.dict')
   # load corpus iterator
-  mm = gensim.corpora.MmCorpus('corpus_tfidf.mm')
+  mm = gensim.corpora.MmCorpus('corpus.mm')
   tfidf = gensim.models.TfidfModel(mm)
   tfidf.save("tfidf.model")
   corpus_tfidf = tfidf[mm]

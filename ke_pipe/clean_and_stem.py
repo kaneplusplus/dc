@@ -14,7 +14,8 @@ def is_not_punct(char):
   elif char in string.punctuation: return False
   else: return True
 
-def clean_and_stem(lines):
+# Add query words as stopwords.
+def clean_and_stem(lines, sw=stopwords.words("english")):
   for line in lines:  
     line = remove_dashes(line.lower())
     line = filter(is_not_punct, line)
