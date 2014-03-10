@@ -43,11 +43,12 @@ def pm_query_gen(query):
         for abst_part in abstract:
           abstract_text += ' ' + str(abst_part.text)
         #title = title.encode('utf-8', 'replace')
-        title = title.encode('ascii', 'replace')
+        title = title.encode('ascii', 'ignore')
         #abstract_text = abstract_text.encode('utf-8', 'replace')
         abstract_text = abstract_text.encode('ascii', 'replace')
       else:
         yield None
+      abstract_text = " ".join(abstract_text.split())
       title = title.replace(',', " ")
       title = title.replace('"', "")
       abstract_text = abstract_text.replace(',', " ")

@@ -9,33 +9,36 @@ registerDoMC()
 # token table
 tt <- function(t) {
   input <- preprocess(data=t, exact=NULL, partial=NULL, subs=NULL,
-    stopwords=stopwords(), cutoff=1, verbose=FALSE, quiet=TRUE, stem=TRUE)
+    stopwords=stopwords(), verbose=FALSE, quiet=TRUE, stem=TRUE)
   data.frame(Token=input$vocab, Freq=as.numeric(table(input$token.id)))
 }
 
-x <- read.csv("title_abstract.csv", as.is=TRUE)
+#x <- read.csv("title_abstract.csv", as.is=TRUE)
+x <- read.csv("query_return.csv", as.is=TRUE)
 x$abstract[is.na(x$abstract)] <- ""
 
 ta <- paste(x$title, x$abstract)
 ta <- tolower(ta)
 
-excludes <- c("virus", "fever", "rift", "valley", "rvfv", "rvf", "viral", ",",
-  ")", "\\(", "\\.", as.character(0:9), "es")
-for (e in excludes) 
-  ta <- gsub(e, " ", ta)
+#excludes <- c("virus", "fever", "rift", "valley", "rvfv", "rvf", "viral", ",",
+#  ")", "\\(", "\\.", as.character(0:9), "es")
+#for (e in excludes) 
+#  ta <- gsub(e, " ", ta)
 
-ta <- gsub("[ ]+", " ", ta)
+#ta <- gsub("[ ]+", " ", ta)
 
-cutoff <- 10 
+#cutoff <- 10 
 
 input <- preprocess(data=ta, exact=NULL, partial=NULL, subs=NULL,
-  stopwords=stopwords(), cutoff=cutoff, verbose=TRUE, quiet=FALSE, stem=TRUE)
+  stopwords=stopwords(), verbose=TRUE, quiet=FALSE, stem=TRUE)
+#  stopwords=stopwords(), cutoff=cutoff, verbose=TRUE, quiet=FALSE, stem=TRUE)
 
 if (any(input$category < 0)) {
   ta <- ta[input$category >= 0]
 
   input <- preprocess(data=ta, exact=NULL, partial=NULL, subs=NULL,
-    stopwords=stopwords(), cutoff=cutoff, verbose=TRUE, quiet=FALSE, stem=TRUE)
+    stopwords=stopwords(), verbose=TRUE, quiet=FALSE, stem=TRUE)
+#    stopwords=stopwords(), cutoff=cutoff, verbose=TRUE, quiet=FALSE, stem=TRUE)
 }
 
 N <- length(input$token.id)  # total number of tokens in the data
