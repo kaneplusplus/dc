@@ -8,11 +8,12 @@ query_ids <- function(query) {
   ids <- xmlSApply(getNodeSet(html_doc, "//idlist//id"), xmlValue)
 }
 
-pm_title_abstracts <- function(query, verbose=TRUE) {
+pm_title_abstracts <- function(query, max_ids=Inf, verbose=TRUE, 
+                               chunkSize=200) {
   ids <- query_ids(query)
   if (verbose)
     cat(length(ids), "ID's found\n")
-  foreach(it=isplitIndices(length(ids), chunkSize=200), 
+  foreach(it=isplitIndices(min(length(ids), max_ids), chunkSize=chunkSize), 
           .combine=c) %do% {
     if (verbose)
       cat(it[1], ":", it[length(it)], "\n", sep="")
