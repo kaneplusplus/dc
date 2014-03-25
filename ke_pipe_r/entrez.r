@@ -75,7 +75,7 @@ pm_doc_info <- function(query, max_ids=Inf, verbose=TRUE,
       journal <- get_journal(element)
       date <- get_date(element)
       data.frame(list(title=title, author=author, date=date, journal=journal,
-        publication_type=publication_type, 
+        publication_type=publication_type, url=url,
         title_and_abstract=title_and_abstract), stringsAsFactors=FALSE)
     }
   }
