@@ -20,9 +20,9 @@ if (any(doc_proc$category != 0)) {
 lsa_cluster <- run_lsa(doc_proc, num_topics=6)
 lda_cluster <- run_lda(doc_proc, num_topics=6)
 
-new_clusters <- register_clusters(lda_cluster$doc_cluster$cluster,
-                                  lsa_cluster$doc_cluster$cluster)
-lsa_cluster$doc_cluster$cluster <- new_clusters$cluster2
+#new_clusters <- register_clusters(lda_cluster$doc_cluster$cluster,
+#                                  lsa_cluster$doc_cluster$cluster)
+#lsa_cluster$doc_cluster$cluster <- new_clusters$cluster2
 
 tdm <- create_tdm(doc_proc)
 document_basis <- irlb_lsa(tdm, dims=5)$tk
@@ -52,51 +52,41 @@ nvd3viz <- function(proj_docs, cluster, titles) {
   nP
 }
 
-#.API_KEY <- "s3njpf57phhvx25bfbzdp3qu"  # fill in your api key
-#.LIMIT <- 50
-#.URL <- sprintf(
-#  "http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/top_rentals.json?apikey=%s&limit=%s",
-#  .API_KEY,
-#  .LIMIT
-#)
-# Retrieve the data from the API
-#movieJSON <- paste(readLines(.URL, warn = FALSE), collapse = "")
-#movieList <- fromJSON(movieJSON, simplify = F)
-#movieTable <- rbindlist(lapply(movieList$movies, function(movie) {
-#    data.table(
-#        x = movie$ratings$critics_score,
-#        y = movie$ratings$audience_score,
-#        name = sprintf("<table cellpadding='4' style='line-height:1.5'><tr><th colspan='3'>%1$s</th></tr><tr><td><img src='%2$s' height='91' width='61'></td><td align='left'>Year: %3$s<br>Runtime: %6$s<br>Audience: %7$s<br>Critics: %4$s<br>M-rating: %5$s</td></tr></table>", 
-#            movie$title,
-#            movie$posters$thumbnail,
-#            movie$year,
-#            movie$ratings$critics_rating,
-#            movie$mpaa_rating,
-#            movie$runtime,
-#            movie$ratings$audience_rating
-#            ),
-##        url = movie$links$alternate,
-##        category = movie$mpaa_rating
-#    )
-#}))
-
-#x <- movieTable
 data <- data.frame(list(x=proj_docs[,1], y=proj_docs[,2], 
   cluster=lsa_cluster$doc_cluster$cluster, url=docs$url), 
   stringsAsFactors=FALSE)
 
-create_html_caption <- function(doc_title, author, date, journal) {
-  str <- paste("<table>",
-    "<tr><td align='left'>Author: %s</td>",
-    "<td align='left'>Year: %s</td>",
-    "<td align='left'>Journal: %s</td></tr></table>")
-  sprintf(str, "short", "shorter", "shortest", journal)
+clean_up_date_string <- function(ds) {
+  ret <- gsub("NULL", "", ds)
+  gsub("[ ]+", " ", ret)
 }
 
-data$name <- create_html_caption(docs$title, docs$author, docs$date, 
-  docs$journal)
+clean_up_entry <- function(entry, max_lines=3, width=30) {
+  entry_vector <- strwrap(entry, width=width)
+  if (length(entry_vector) > max_lines) {
+    title_vector <- entry_vector[1:max_lines]
+    entry_vector[max_lines] <- paste(entry_vector[max_lines], "...", sep="")
+  }
+  paste(entry_vector, collapse="<br>")
+}
 
-highcharts_viz(data, by="cluster")
+clean_up_entries <- function(entries, max_lines=3, width=30) {
+  foreach (entry=entries, .combine=c) %do% {
+    clean_up_title(entry, max_lines, width)
+  }
+}
+
+create_html_caption <- function(doc_title, author, date, journal) {
+  str <- paste("<b>%s</b><table>",
+    "<tr><td align='left'><b>Author:</b></td><td>%s</td></tr>",
+    "<td align='left'><b>Date:</b></td><td>%s</td></tr>",
+    "<td align='left'><b>Journal:</b></td><td>%s</td></tr></table>")
+  sprintf(str, 
+    clean_up_entries(doc_title, width=40), 
+    clean_up_entries(author), 
+    clean_up_date_string(date), 
+    clean_up_entries(journal))
+}
 
 highcharts_viz <- function(data, x_name="x", y_name="y", by="", xlab="", 
                            ylab="", title="", 
@@ -145,3 +135,8 @@ highcharts_viz <- function(data, x_name="x", y_name="y", by="", xlab="",
   viz$subtitle(text=subtitle) 
   viz
 }
+
+data$name <- create_html_caption(docs$title, docs$author, docs$date, 
+  docs$journal)
+
+highcharts_viz(data, by="cluster")

@@ -55,8 +55,7 @@ pm_doc_info <- function(query, max_ids=Inf, verbose=TRUE,
     id_string <- paste(ids[it], sep="", collapse=",")
     abstract_query <- paste('http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?&db=pubmed&retmode=xml&id=', id_string, sep="")
     doc <- htmlParse(abstract_query)
-    foreach(element=getNodeSet(doc, "//medlinecitation/article"), 
-            pmid=ids[1:length(it)],
+    foreach(element=getNodeSet(doc, "//medlinecitation/article"), pmid=ids[it],
             .combine=rbind) %do% {
       url <- paste("http://www.ncbi.nlm.nih.gov/pubmed/?term=",
         pmid, "%5Buid%5D", sep="")
