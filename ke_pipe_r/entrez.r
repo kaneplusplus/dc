@@ -43,8 +43,7 @@ get_date <- function(element) {
   paste(month, day, year)
 }
 
-pm_doc_info <- function(query, max_ids=Inf, verbose=TRUE, 
-                               chunkSize=200) {
+pm_doc_info <- function(query, max_ids=Inf, verbose=FALSE, chunkSize=200) {
   ids <- query_ids(query)
   if (verbose)
     cat(length(ids), "ID's found\n")
@@ -80,7 +79,51 @@ pm_doc_info <- function(query, max_ids=Inf, verbose=TRUE,
   }
 }
 
-pm_title_abstracts <- function(query, max_ids=Inf, verbose=TRUE,
+pm_title_abstracts <- function(query, max_ids=Inf, verbose=FALSE,
                                chunkSize=200) {
   pm_doc_info(query, max_ids, verbose, chunkSize)$title_and_abstract
+}
+
+# It might be nice if this eventually included elasticsearch.
+init_pm_query_cache <- function(host="localhost", port=6379, 
+                                password=NULL, returnRef=FALSE, 
+                                nodelay=FALSE, timeout=2678399L,
+                                expire_time=3600) {
+  redisConnect(host=host, port=port, password=password, returnRef=returnRef,
+               nodelay=nodelay, timeout=timeout)
+  options(expire_time=expire_time)
+}
+
+# The cached, query results.
+pm_query <- function(query, max_ids=Inf, verbose=FALSE, chunkSize=200) {
+  ret <- NULL
+  # Does the query exist in Redis?
+  if (redisExists(query)) {
+    if (verbose)
+      cat("Query found in Redis\n")
+    # Are there at least max_ids in the query?
+    cached_obj <- redisGet(query)
+    if (cached_obj$max_ids >= max_ids) {
+      # The cached object is sufficient.
+      # Update the expiration time.
+      redisExpireAt(query, 
+                    as.integer(as.POSIXct(Sys.time())+options()$expire_time))
+      ret <- 
+        cached_obj$query_result[1:min(max_ids, length(cached_obj$query_result))]
+    } else {
+      if (verbose)
+        cat("Query did not have enough articles")
+    }
+  }
+  if (is.null(ret)) {
+    # We need to hit Pubmed.
+    if (verbose)
+      cat("Query not found in Redis. Going to Pubmed...\n")
+    ret <- pm_doc_info(query=query, max_ids=max_ids, verbose=verbose,
+                       chunkSize=chunkSize)
+    redisSet(query, list(max_ids=max_ids, query_result=ret))
+    redisExpireAt(query, 
+                  as.integer(as.POSIXct(Sys.time())+options()$expire_time))
+  }
+  ret
 }

@@ -1,14 +1,11 @@
-source("entrez.r")
 library(tm)
 library(ldatools)
-library(lsa) # Get rid of this. It's only calling svd.
 library(LDAviz)
 library(Matrix)
 library(irlba)
 library(foreach)
-#library(doMC)
 
-run_lda <- function(doc_proc, num_topics, num_iter=1000) {
+run_lda <- function(doc_proc, num_topics, num_iter=1000, ...) {
   fit <- LDAviz::fitLDA(word.id=doc_proc$token.id, doc.id=doc_proc$doc.id, 
                 k=num_topics, n.iter=num_iter)
   doc_prob <- LDAviz::getProbs(word.id=doc_proc$token.id, 
@@ -28,9 +25,8 @@ tfidf <- function(x, log.scale) {
 
 tfidf.default <- function(x, log.scale=TRUE) {
   df <- as.vector(apply(x, 1, function(x) sum(x > 0)))
-  if (log.scale) {
+  if (log.scale) 
    log(x+1) * (log2(ncol(x)/df) + 1)
-  }
   else
    x * ncol(x)/df
 }
@@ -94,7 +90,7 @@ run_lsa <- function(doc_proc, num_topics, sparse.tdm=TRUE, use.irlb=TRUE, ...) {
   km <- kmeans(projected_documents, centers=num_topics)
   doc_cluster <- data.frame(list(doc_id=unique(doc_proc$doc.id),
                                   cluster=km$cluster))
-  ret <- list("doc_cluster"=doc_cluster, "doc_proc"=doc_proc)
+  ret <- list("doc_cluster"=doc_cluster, "doc_proc"=doc_proc, "space"=lsa_space)
   class(ret) <- "lsa_cluster"
   ret
 }
