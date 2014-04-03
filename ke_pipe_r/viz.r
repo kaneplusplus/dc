@@ -208,11 +208,11 @@ create_viz <- function(query, max_ids, num_clusters, cluster_algo="lsa",
   if (cluster_algo == "lsa") {
     cluster_obj <- memoize(
       run_lsa(doc_proc, num_topics=num_clusters, ...),
-      paste(get_session_id(), query, "lsa", num_clusters))
+      paste(get_session_id(), query, max_ids, "lsa", num_clusters))
   } else if (cluster_algo == "lda") {
     cluster_obj <- memoize(
       run_lda(doc_proc, num_topics=num_clusters, ...),
-      paste(get_session_id(), query, "lda", num_clusters))
+      paste(get_session_id(), query, max_ids, "lda", num_clusters))
   } else {
     stop("Unsupported clustering algorithm")
   }

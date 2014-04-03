@@ -109,7 +109,7 @@ pm_query <- function(query, max_ids=Inf, verbose=FALSE, chunkSize=200) {
         cached_obj$query_result[1:min(max_ids, nrow(cached_obj$query_result)),]
     } else {
       if (verbose)
-        cat("Query did not have enough articles")
+        cat("Redis did not have enough articles\n")
     }
   }
   if (is.null(ret)) {
