@@ -132,7 +132,7 @@ get_docs_and_procs <- function(query, max_ids=Inf, verbose=FALSE) {
   } else {
     if (verbose)
       cat("Docs and doc procs not found in Redis.\n")
-    docs <- pm_query(query, max_ids)
+    docs <- pm_query(query, max_ids, verbose=verbose)
     doc_proc <- ldatools::preprocess(data=docs$title_and_abstract, 
       stopwords=stopwords(), stem=TRUE)
     if (any(doc_proc$category != 0)) {
@@ -219,9 +219,12 @@ create_viz <- function(query, max_ids, num_clusters, cluster_algo="lsa",
 
   proj_docs <- get_proj_docs(doc_proc, query, max_ids, components, 
                              verbose=verbose)
-
-  data <- data.frame(list(x=proj_docs[,1], y=proj_docs[,2], 
-    cluster=cluster_obj$doc_cluster$cluster, url=docs$url), 
+  
+  num_docs <- length(docs$url)
+  if (verbose)
+    cat("Number of documents is", num_docs, "\n")
+  data <- data.frame(list(x=proj_docs[1:num_docs,1], y=proj_docs[1:num_docs,2], 
+    cluster=cluster_obj$doc_cluster$cluster[1:num_docs], url=docs$url), 
     stringsAsFactors=FALSE)
 
   data$name <- create_html_caption(docs$title, docs$author, docs$date, 

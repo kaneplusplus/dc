@@ -105,11 +105,8 @@ pm_query <- function(query, max_ids=Inf, verbose=FALSE, chunkSize=200) {
     cached_obj <- redisGet(query)
     if (cached_obj$max_ids >= max_ids) {
       # The cached object is sufficient.
-      # Update the expiration time.
-      redisExpireAt(query, 
-                    as.integer(as.POSIXct(Sys.time())+options()$expire_time))
       ret <- 
-        cached_obj$query_result[1:min(max_ids, length(cached_obj$query_result))]
+        cached_obj$query_result[1:min(max_ids, nrow(cached_obj$query_result)),]
     } else {
       if (verbose)
         cat("Query did not have enough articles")
@@ -122,8 +119,7 @@ pm_query <- function(query, max_ids=Inf, verbose=FALSE, chunkSize=200) {
     ret <- pm_doc_info(query=query, max_ids=max_ids, verbose=verbose,
                        chunkSize=chunkSize)
     redisSet(query, list(max_ids=max_ids, query_result=ret))
-    redisExpireAt(query, 
-                  as.integer(as.POSIXct(Sys.time())+options()$expire_time))
   }
+  redisExpireAt(query, as.integer(as.POSIXct(Sys.time())+options()$expire_time))
   ret
 }
